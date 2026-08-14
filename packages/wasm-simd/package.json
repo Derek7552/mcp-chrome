@@ -28,7 +28,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-repo/chrome-mcp-server.git",
+    "url": "git+https://github.com/your-repo/chrome-mcp-server-pro.git",
     "directory": "packages/wasm-simd"
   }
 }

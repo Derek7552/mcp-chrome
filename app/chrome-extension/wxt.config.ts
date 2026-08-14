@@ -10,7 +10,12 @@ import IconsResolver from 'unplugin-icons/resolver';
 config({ path: resolve(process.cwd(), '.env') });
 config({ path: resolve(process.cwd(), '.env.local') });
 
-const CHROME_EXTENSION_KEY = process.env.CHROME_EXTENSION_KEY;
+// 固定公钥（SPKI DER base64）：Chrome 扩展 ID 由它计算得出，保持恒定。
+// 公钥可安全公开；私钥仅用于 CRX 签名，本仓库以 Load unpacked 方式分发，无需私钥。
+// 如需临时覆盖（如测试），可通过环境变量 CHROME_EXTENSION_KEY 指定。
+const EXTENSION_KEY =
+  'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn+qxFY58fIggMSPjlo0I7klYJe6cmBUOLu2E3MoP4wyt1pTeeovGe8T0an9MXBMNpOqH8GemQjqqWkbwwwSJdstW+Q9bwZa6vM6sz9alfmdgrnS/HBhSMW90vAXOWeMpW/6+n1lxXN7N5NQPklkGVdileZzsbv4hFyRBX2EBqGy6k6V1kURJfJhyH42rCRcJyIvGNIvN63rodCE4OmQPYfTgX0zQXe8xrY/NTT8wF9z/3YZPDxuMK9vBVQT6qakpmGpupR116/jdn+MawRyE2GluzjrXeN5qS32m+JjAuz7hMd8nsyOWGHXV03CpuHOKPuaD8r9Syb3SRpZ/4L3eewIDAQAB';
+const CHROME_EXTENSION_KEY = process.env.CHROME_EXTENSION_KEY ?? EXTENSION_KEY;
 // Detect dev mode early for manifest-level switches
 const IS_DEV = process.env.NODE_ENV !== 'production' && process.env.MODE !== 'production';
 
@@ -63,7 +68,7 @@ export default defineConfig({
     },
     action: {
       default_popup: 'popup.html',
-      default_title: 'Chrome MCP Server',
+      default_title: 'Chrome MCP Server Pro',
     },
     // Chrome Side Panel entry for workflow management
     // Ref: https://developer.chrome.com/docs/extensions/reference/api/sidePanel
