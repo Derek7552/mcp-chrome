@@ -7,7 +7,7 @@
  * - Auto-create tables on first run (no migration tool needed)
  * - Configurable path via environment variable
  */
-import Database from 'better-sqlite3';
+import type Database from 'better-sqlite3';
 import { drizzle, BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { sql } from 'drizzle-orm';
 import * as schema from './schema';
@@ -172,6 +172,45 @@ function ensureDataDir(): void {
 }
 
 // ============================================================
+// Lazy Native Module Loading
+// ============================================================
+
+/**
+ * Build an actionable error for a better-sqlite3 load/construction failure.
+ */
+function sqliteLoadError(cause: unknown): Error {
+  const reason = cause instanceof Error ? cause.message : String(cause);
+  return new Error(
+    [
+      'Agent 数据库依赖的原生模块 better-sqlite3 加载失败（智能助手功能暂不可用，其余功能不受影响）。',
+      '',
+      `原因: ${reason}`,
+      '',
+      '修复: 在 app/native-server 下重装依赖并重建原生模块:',
+      '  cd app/native-server && pnpm install && npm rebuild better-sqlite3',
+      '然后重启 Chrome 或重载扩展。也可运行 mcp-chrome-bridge doctor 查看诊断。',
+    ].join('\n'),
+  );
+}
+
+/**
+ * Load the better-sqlite3 native module lazily.
+ *
+ * better-sqlite3 is a native addon; if the install is partial (e.g. its
+ * transitive dep `bindings` is missing), the native addon fails to load when
+ * the Database constructor runs. Loading and constructing it here — instead of
+ * at module top-level — keeps the native host from crashing at startup, and
+ * turns the raw error into an actionable message.
+ */
+function loadSqliteConstructor(): typeof import('better-sqlite3') {
+  try {
+    return require('better-sqlite3') as typeof import('better-sqlite3');
+  } catch (cause) {
+    throw sqliteLoadError(cause);
+  }
+}
+
+// ============================================================
 // Public API
 // ============================================================
 
@@ -188,7 +227,12 @@ export function getDb(): DrizzleDB {
   const dbPath = getDatabasePath();
 
   // Create SQLite connection
-  sqliteInstance = new Database(dbPath);
+  const DatabaseCtor = loadSqliteConstructor();
+  try {
+    sqliteInstance = new DatabaseCtor(dbPath);
+  } catch (cause) {
+    throw sqliteLoadError(cause);
+  }
 
   // Enable WAL mode for better concurrent read performance
   sqliteInstance.pragma('journal_mode = WAL');

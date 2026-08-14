@@ -86,6 +86,25 @@ export CHROME_MCP_NODE_PATH=/path/to/your/node
 
 Or run `mcp-chrome-bridge doctor --fix` to write the current Node path.
 
+## Cannot Find Module 'bindings' (Smart Assistant Database)
+
+**Symptom**: The smart assistant (AgentChat) shows a database error, and the native host crashes at startup.
+
+**Root cause**: A partial or interrupted pnpm install left `better-sqlite3`'s transitive dependency `bindings` missing, so the native SQLite module cannot load.
+
+**Fix**:
+
+1. Reinstall dependencies and rebuild the native module:
+
+```bash
+cd app/native-server
+pnpm install
+npm rebuild better-sqlite3
+```
+
+2. Restart Chrome or reload the extension.
+3. Run `mcp-chrome-bridge doctor` and confirm the `Agent database (better-sqlite3)` check passes.
+
 ## Log Locations
 
 Wrapper logs are now stored in user-writable locations:
