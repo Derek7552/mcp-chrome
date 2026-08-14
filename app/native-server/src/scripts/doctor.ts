@@ -1036,6 +1036,34 @@ export async function collectDoctorReport(options: DoctorOptions): Promise<Docto
     },
   });
 
+  // Check 9: Agent database (better-sqlite3 native module)
+  try {
+    // Resolve from the installed package's own node_modules (not the current
+    // process's resolution, which may be a different install).
+    const betterSqlite3Path = require.resolve('better-sqlite3', { paths: [rootDir] });
+    const BetterSqlite3 = require(betterSqlite3Path);
+    // Open an in-memory connection to confirm the native addon actually loads.
+    const probe = new BetterSqlite3(':memory:');
+    probe.close();
+    checks.push({
+      id: 'agent.sqlite',
+      title: 'Agent database (better-sqlite3)',
+      status: 'ok',
+      message: `better-sqlite3 native addon loads (${betterSqlite3Path})`,
+    });
+  } catch (e) {
+    checks.push({
+      id: 'agent.sqlite',
+      title: 'Agent database (better-sqlite3)',
+      status: 'error',
+      message: `better-sqlite3 failed to load: ${stringifyError(e)}`,
+      details: {
+        fix: ['cd app/native-server && pnpm install && npm rebuild better-sqlite3'],
+      },
+    });
+    nextSteps.push('cd app/native-server && pnpm install && npm rebuild better-sqlite3');
+  }
+
   // Compute summary
   const summary = computeSummary(checks);
   const ok = summary.error === 0;
