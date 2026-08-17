@@ -166,7 +166,7 @@ importers:
         specifier: ^1.0.1299282
         version: 1.0.1556696
       chrome-mcp-shared:
-        specifier: workspace:*
+        specifier: 1.0.1
         version: link:../../packages/shared
       commander:
         specifier: ^13.1.0
